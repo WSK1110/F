@@ -290,11 +290,9 @@ ollama serve
 
 This project is for educational purposes. Please ensure compliance with API usage terms and data privacy regulations.
 
-## 👥 Team
+## 👥 Credit
 
-- **Team Members**: [Add your team members here]
-- **Roles**: [Add roles and responsibilities]
-
+- **Members**: Shenkun Wu
 ---
 
 **Note**: This chatbot is designed for educational and research purposes. Always verify financial information from official sources before making investment decisions. 

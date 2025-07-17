@@ -268,93 +268,87 @@ class RAGChatbot:
         return documents
     
     def create_vector_store(self, documents: List[Document], embeddings_provider: str = None, force_recreate: bool = False):
-        """Create vector store from documents with LightRAG optimizations"""
+         """Create or retrieve a cached vector store from documents with LightRAG optimizations"""
         if not documents:
             st.error("No documents to process")
             return None
-        
+
+        # Determine embedding provider/model to build a stable cache key
+        embeddings_provider = embeddings_provider or self.config['EMBEDDINGS']['provider']
+        embeddings_model = self.config['EMBEDDINGS']['model']
+
+        cache_key = f"{embeddings_provider}:{embeddings_model}"  # simple key – expand if needed
+
+        # Use Streamlit session_state as an in-memory cache for vector stores
+        if 'vector_store_cache' not in st.session_state:
+            st.session_state.vector_store_cache = {}
+
+        if not force_recreate and cache_key in st.session_state.vector_store_cache:
+            self.vector_store, self.document_splits = st.session_state.vector_store_cache[cache_key]
+            st.success("✅ Vector store retrieved from in-memory cache")
+            return self.vector_store
+
+        # Initialise embeddings lazily only if we actually need to create/load
         embeddings = self.get_embeddings(embeddings_provider)
         if not embeddings:
             return None
-        
-        # Check embedding dimensions and handle database conflicts
-        try:
-            # Test embedding dimension
-            test_embedding = embeddings.embed_query("test")
-            embedding_dim = len(test_embedding)
-            st.info(f"Embedding dimension: {embedding_dim}")
-            
-            # Check if existing database has different dimensions
-            if os.path.exists("./chroma_db") and not force_recreate:
-                try:
-                    # Try to load existing database
-                    existing_db = Chroma(
-                        persist_directory="./chroma_db",
-                        embedding_function=embeddings
-                    )
-                    # If successful, use existing database
-                    self.vector_store = existing_db
-                    st.success("Using existing vector store")
-                    return self.vector_store
-                except Exception as e:
-                    if "dimension" in str(e).lower():
-                        st.warning("⚠️ Dimension mismatch detected! Existing database has different embedding dimensions.")
-                        if st.button("🗑️ Clear Database and Recreate", key="clear_db"):
-                            import shutil
-                            shutil.rmtree("./chroma_db", ignore_errors=True)
-                            st.success("Database cleared. Recreating...")
-                            force_recreate = True
-                        else:
-                            st.error("Please clear the database or use a compatible embedding model.")
-                            return None
-                    else:
-                        st.error(f"Error loading existing database: {e}")
-                        return None
-            
-        except Exception as e:
-            st.error(f"Error testing embeddings: {e}")
-            return None
-        
-        # Split documents
+
+        # First try to load an on-disk Chroma DB (fast) --------------------------------------------------
+        if os.path.exists("./chroma_db") and not force_recreate:
+            try:
+                self.vector_store = Chroma(
+                    persist_directory="./chroma_db",
+                    embedding_function=embeddings
+                )
+                # Retrieve meta info – assumes stored collection name is default
+                self.document_splits = getattr(self, 'document_splits', None) or []
+                st.session_state.vector_store_cache[cache_key] = (self.vector_store, self.document_splits)
+                st.success("✅ Loaded existing Chroma vector store from disk")
+                return self.vector_store
+            except Exception as e:
+                # Common reason: dimension mismatch when user switches embedding model
+                if "dimension" not in str(e).lower():
+                    st.error(f"Error loading existing DB: {e}")
+                    return None
+                # fall through to rebuild
+                st.warning("Embedding dimension mismatch – rebuilding vector store…")
+
+        # Build fresh vector store -----------------------------------------------------------------------
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=int(self.config['RAG']['chunk_size']),
             chunk_overlap=int(self.config['RAG']['chunk_overlap']),
             length_function=len,
         )
-        
+
         splits = text_splitter.split_documents(documents)
-        st.info(f"📊 Created {len(splits)} text chunks")
-        
-        # Show sample chunks for debugging
-        if splits:
-            st.write(f"📄 Sample chunk 1: {splits[0].page_content[:200]}...")
-            st.write(f"📄 Sample chunk 2: {splits[1].page_content[:200]}...")
-            st.write(f"📄 Sample chunk 3: {splits[2].page_content[:200]}...")
-        else:
+        if not splits:
             st.error("❌ No text chunks created from documents!")
             return None
-        
-        # Create vector store
+
+        # Debug samples only if user opts-in
+        if st.session_state.get('verbose_debug', False):
+            st.info(f"📊 Created {len(splits)} text chunks")
+            st.write(f"📄 Sample chunk 1: {splits[0].page_content[:200]}…")
+
         try:
-            st.info("🔧 Creating vector store with Chroma...")
             self.vector_store = Chroma.from_documents(
                 documents=splits,
                 embedding=embeddings,
                 persist_directory="./chroma_db"
             )
-            
-            # Store splits for hybrid retrieval
+
             self.document_splits = splits
-            
-            st.success(f"✅ Vector store created successfully with {embedding_dim}-dimensional embeddings")
-            st.info(f"📊 Vector store contains {len(splits)} document chunks")
+
+            # Cache in memory for subsequent reruns
+            st.session_state.vector_store_cache[cache_key] = (self.vector_store, self.document_splits)
+
+            st.success("✅ Vector store built and cached successfully")
             return self.vector_store
-            
+
         except Exception as e:
             st.error(f"❌ Error creating vector store: {e}")
-            st.error(f"Error type: {type(e).__name__}")
             import traceback
-            st.error(f"Traceback: {traceback.format_exc()}")
+            st.error(traceback.format_exc())
             return None
     
     def create_hybrid_retriever(self):

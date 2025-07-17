@@ -29,7 +29,6 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter
 from langchain.retrievers.merger_retriever import MergerRetriever
 
 # Document processing
-from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.schema import Document
 
 # Configuration
@@ -94,6 +93,25 @@ def retrieve_per_company(vector_store, question, documents, k_per_company=2):
 def is_comparison_question(question):
     # Simple heuristic, can be improved
     return any(word in question.lower() for word in ['compare', 'versus', 'difference', 'both', 'all companies'])
+
+# Add cached loader right after imports
+@st.cache_data(show_spinner=False)
+def _cached_load_10k_docs(data_dir: str = "10k_files") -> List[Document]:
+    """Load and cache 10-K PDF files.
+    This prevents expensive disk I/O and PDF parsing on every Streamlit rerun.
+    """
+    if not os.path.exists(data_dir):
+        return []
+
+    # Local import to avoid heavy dependency cost until actually needed
+    from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
+
+    loader = DirectoryLoader(
+        data_dir,
+        glob="**/*.pdf",
+        loader_cls=PyPDFLoader
+    )
+    return loader.load()
 
 class RAGChatbot:
     """
@@ -230,58 +248,23 @@ class RAGChatbot:
             return None
     
     def load_10k_files(self, data_dir: str = "10k_files") -> List[Document]:
-        """Load 10-K PDF files from directory"""
-        documents = []
-        
-        if not os.path.exists(data_dir):
-            st.warning(f"Data directory {data_dir} not found. Please ensure 10-K files are available.")
-            return documents
-        
-        # List all PDF files in directory
-        pdf_files = []
-        for file in os.listdir(data_dir):
-            if file.lower().endswith('.pdf'):
-                pdf_files.append(file)
-        
-        st.info(f"Found {len(pdf_files)} PDF files: {', '.join(pdf_files)}")
-        
-        if not pdf_files:
-            st.error("No PDF files found in the 10k_files directory")
-            return documents
-        
-        # Load PDF files
-        loader = DirectoryLoader(
-            data_dir,
-            glob="**/*.pdf",
-            loader_cls=PyPDFLoader
-        )
-        
-        try:
-            documents = loader.load()
-            # Show document summary
-            total_chars = sum(len(doc.page_content) for doc in documents)
-            st.success(f"✅ Successfully loaded {len(documents)} documents from {data_dir}")
-            st.info(f"Total characters: {total_chars}")
+        """Load 10-K PDF files from directory, using the cached helper to reduce load time."""
+        documents = _cached_load_10k_docs(data_dir)
 
-            # Optionally show document details in an expander
-            with st.expander("Show document details", expanded=False):
-                for i, doc in enumerate(documents):
-                    st.write(f"📄 Document {i+1}: {len(doc.page_content)} characters")
-                    st.code(doc.page_content[:1000] + ("..." if len(doc.page_content) > 1000 else ""), language=None)
-            
-            # Tag each document with company name
-            for doc in documents:
-                # Assume doc.metadata['source'] contains the filename
-                filename = doc.metadata.get('source', '')
-                company = extract_company_name(filename)
-                doc.metadata['company'] = company
-            
-        except Exception as e:
-            st.error(f"❌ Error loading documents: {e}")
-            st.error(f"Error type: {type(e).__name__}")
-            import traceback
-            st.error(f"Traceback: {traceback.format_exc()}")
-        
+        if not documents:
+            st.warning(f"No documents could be loaded from {data_dir}.")
+            return []
+
+        # Tag each document with company name (done once thanks to caching)
+        for doc in documents:
+            filename = doc.metadata.get('source', '')
+            company = extract_company_name(filename)
+            doc.metadata['company'] = company
+
+        # Display summary (light-weight, avoid re-parsing full text)
+        st.success(f"✅ Loaded {len(documents)} 10-K documents from cache")
+        st.info(f"Total characters across docs: {sum(len(d.page_content) for d in documents):,}")
+
         return documents
     
     def create_vector_store(self, documents: List[Document], embeddings_provider: str = None, force_recreate: bool = False):

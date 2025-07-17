@@ -6,15 +6,26 @@ import logging
 from datetime import datetime
 import json
 import re
+import pickle
+import importlib
+# Optional (lazy) community components
+try:
+    _ollama_mod = importlib.import_module("langchain_community.llms")
+    Ollama = getattr(_ollama_mod, "Ollama", None)
+except ModuleNotFoundError:
+    Ollama = None  # type: ignore
+
+try:
+    _ollama_emb_mod = importlib.import_module("langchain_community.embeddings")
+    OllamaEmbeddings = getattr(_ollama_emb_mod, "OllamaEmbeddings", None)
+except ModuleNotFoundError:
+    OllamaEmbeddings = None  # type: ignore
 
 # LLM and Embedding imports
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.llms import Ollama
-
-# RAG components
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain_community.embeddings import OllamaEmbeddings
+# from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -23,7 +34,7 @@ from langchain.prompts import PromptTemplate
 # LightRAG improvements
 from langchain.retrievers import EnsembleRetriever
 from langchain.retrievers.document_compressors import LLMChainExtractor
-from langchain_community.retrievers import BM25Retriever
+# from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import EmbeddingsFilter
 from langchain.retrievers.merger_retriever import MergerRetriever
@@ -206,6 +217,9 @@ class RAGChatbot:
             )
         
         elif provider == 'ollama':
+            if Ollama is None:
+                st.error("Ollama provider not available – please install langchain_community with Ollama support.")
+                return None
             return Ollama(
                 model=model,
                 temperature=float(self.config['DEFAULT']['temperature'])
@@ -241,6 +255,9 @@ class RAGChatbot:
             )
         
         elif provider == 'ollama':
+            if OllamaEmbeddings is None:
+                st.error("Ollama embeddings not available – please install langchain_community with Ollama support.")
+                return None
             return OllamaEmbeddings(model=model)
         
         else:
@@ -313,22 +330,49 @@ class RAGChatbot:
                 # fall through to rebuild
                 st.warning("Embedding dimension mismatch – rebuilding vector store…")
 
+        # Attempt to load cached text splits from disk --------------------------------------------------
+        chunk_size_val = int(self.config['RAG']['chunk_size'])
+        chunk_overlap_val = int(self.config['RAG']['chunk_overlap'])
+        splits_cache_path = f"./cache/splits_{chunk_size_val}_{chunk_overlap_val}.pkl"
+
+        splits = None
+        if not force_recreate and os.path.exists(splits_cache_path):
+            try:
+                with open(splits_cache_path, "rb") as fh:
+                    splits = pickle.load(fh)
+                st.info("📂 Loaded cached text chunks from disk")
+            except Exception:
+                splits = None  # Fallback to re-splitting if cache corrupted
+
         # Build fresh vector store -----------------------------------------------------------------------
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=int(self.config['RAG']['chunk_size']),
-            chunk_overlap=int(self.config['RAG']['chunk_overlap']),
-            length_function=len,
-        )
+        if splits is None:
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=chunk_size_val,
+                chunk_overlap=chunk_overlap_val,
+                length_function=len,
+            )
 
-        splits = text_splitter.split_documents(documents)
-        if not splits:
-            st.error("❌ No text chunks created from documents!")
-            return None
+            splits = text_splitter.split_documents(documents)
 
-        # Debug samples only if user opts-in
-        if st.session_state.get('verbose_debug', False):
-            st.info(f"📊 Created {len(splits)} text chunks")
-            st.write(f"📄 Sample chunk 1: {splits[0].page_content[:200]}…")
+            if not splits:
+                st.error("❌ No text chunks created from documents!")
+                return None
+
+            # Persist new splits for future runs
+            os.makedirs("./cache", exist_ok=True)
+            try:
+                with open(splits_cache_path, "wb") as fh:
+                    pickle.dump(splits, fh)
+                st.info("💾 Persisted text chunks to disk cache")
+            except Exception as e:
+                st.warning(f"Could not write splits cache: {e}")
+
+            # Debug samples only if user opts-in
+            if st.session_state.get('verbose_debug', False):
+                st.info(f"📊 Created {len(splits)} text chunks")
+                st.write(f"📄 Sample chunk 1: {splits[0].page_content[:200]}…")
+ 
+        # 'splits' is now guaranteed to be populated (either from disk cache or freshly created)
 
         try:
             self.vector_store = Chroma.from_documents(
@@ -362,11 +406,19 @@ class RAGChatbot:
             search_kwargs={"k": int(self.config['LIGHT_RAG']['rerank_top_k'])}
         )
         
-        # Sparse retriever (BM25)
-        sparse_retriever = BM25Retriever.from_documents(self.document_splits)
-        sparse_retriever.k = int(self.config['LIGHT_RAG']['rerank_top_k'])
-        
-        # Create ensemble retriever
+        # Try to build sparse retriever (BM25) if available ---------------------------------------------
+        sparse_retriever = None
+        try:
+            BM25Retriever = importlib.import_module("langchain_community.retrievers").BM25Retriever  # type: ignore
+            sparse_retriever = BM25Retriever.from_documents(self.document_splits)
+            sparse_retriever.k = int(self.config['LIGHT_RAG']['rerank_top_k'])
+        except ModuleNotFoundError:
+            st.info("BM25Retriever not installed – proceeding with dense retrieval only")
+
+        if sparse_retriever is None:
+            return dense_retriever
+
+        # Create ensemble retriever combining dense + sparse --------------------------------------------
         ensemble_retriever = EnsembleRetriever(
             retrievers=[dense_retriever, sparse_retriever],
             weights=[
@@ -374,7 +426,7 @@ class RAGChatbot:
                 float(self.config['LIGHT_RAG']['sparse_weight'])
             ]
         )
-        
+
         return ensemble_retriever
     
     def create_compression_retriever(self, base_retriever):

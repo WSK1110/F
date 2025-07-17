@@ -1,5 +1,5 @@
 import json
-import pandas as pd
+import polars as pl
 from datetime import datetime
 from typing import List, Dict, Any
 import time
@@ -326,7 +326,7 @@ class RAGEvaluator:
         if not successful_results:
             return {"error": "No successful evaluations"}
         
-        # Create comparison DataFrame
+        # Build comparison data for tabular display
         comparison_data = []
         for result in successful_results:
             config = result['configuration']
@@ -345,12 +345,15 @@ class RAGEvaluator:
                 'Date Mention Rate (%)': quality['date_mention_rate'] * 100
             })
         
-        df = pd.DataFrame(comparison_data)
-        
-        # Find best configurations
-        best_performance = df.loc[df['Avg Response Time (s)'].idxmin()]
-        best_quality = df.loc[df['Keyword Coverage (%)'].idxmax()]
-        best_overall = df.loc[(df['Keyword Coverage (%)'] * df['Success Rate (%)'] / df['Avg Response Time (s)']).idxmax()]
+        # Use simple python min/max to avoid heavy DataFrame operations
+        best_performance = min(comparison_data, key=lambda x: x['Avg Response Time (s)'])
+        best_quality = max(comparison_data, key=lambda x: x['Keyword Coverage (%)'])
+        best_overall = max(
+            comparison_data,
+            key=lambda x: (x['Keyword Coverage (%)'] * x['Success Rate (%)']) / max(x['Avg Response Time (s)'], 1e-6)
+        )
+
+        df = pl.DataFrame(comparison_data)
         
         report = {
             "summary": {
@@ -360,38 +363,39 @@ class RAGEvaluator:
                 "best_quality": best_quality['Configuration'],
                 "best_overall": best_overall['Configuration']
             },
-            "comparison_table": df.to_dict('records'),
+            "comparison_table": df.to_dicts(),
             "detailed_results": self.results,
-            "recommendations": self._generate_recommendations(df),
+            "recommendations": self._generate_recommendations(comparison_data),
             "timestamp": datetime.now().isoformat()
         }
         
         return report
     
-    def _generate_recommendations(self, df: pd.DataFrame) -> List[str]:
+    def _generate_recommendations(self, table: List[Dict]) -> List[str]:
         """Generate recommendations based on evaluation results"""
         recommendations = []
         
         # Performance recommendations
-        fastest = df.loc[df['Avg Response Time (s)'].idxmin()]
+        fastest = min(table, key=lambda x: x['Avg Response Time (s)'])
         recommendations.append(f"Fastest configuration: {fastest['Configuration']} ({fastest['Avg Response Time (s)']:.2f}s)")
         
         # Quality recommendations
-        best_coverage = df.loc[df['Keyword Coverage (%)'].idxmax()]
+        best_coverage = max(table, key=lambda x: x['Keyword Coverage (%)'])
         recommendations.append(f"Best keyword coverage: {best_coverage['Configuration']} ({best_coverage['Keyword Coverage (%)']:.1f}%)")
         
         # Cost-effectiveness recommendations
-        if len(df) > 1:
-            # Find best balance of performance and quality
-            df['efficiency_score'] = df['Keyword Coverage (%)'] * df['Success Rate (%)'] / df['Avg Response Time (s)']
-            most_efficient = df.loc[df['efficiency_score'].idxmax()]
+        if len(table) > 1:
+            most_efficient = max(
+                table,
+                key=lambda x: (x['Keyword Coverage (%)'] * x['Success Rate (%)']) / max(x['Avg Response Time (s)'], 1e-6)
+            )
             recommendations.append(f"Most efficient: {most_efficient['Configuration']}")
         
         # Specific recommendations
-        if any('ollama' in config for config in df['Configuration']):
+        if any('ollama' in row['Configuration'] for row in table):
             recommendations.append("Ollama models provide good local performance but may be slower than cloud models")
         
-        if any('gemini' in config for config in df['Configuration']):
+        if any('gemini' in row['Configuration'] for row in table):
             recommendations.append("Gemini models show strong performance for financial document analysis")
         
         return recommendations
@@ -438,8 +442,8 @@ def main():
         # Display comparison table
         print("\n📋 COMPARISON TABLE")
         print("=" * 30)
-        df = pd.DataFrame(report['comparison_table'])
-        print(df.to_string(index=False))
+        df = pl.DataFrame(report['comparison_table'])
+        print(df)
         
     else:
         print(f"❌ Evaluation failed: {report['error']}")

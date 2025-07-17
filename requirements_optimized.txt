@@ -1,0 +1,38 @@
+# Core dependencies (required)
+streamlit>=1.28.0
+pandas>=2.0.0
+python-dotenv>=1.0.0
+configparser>=5.3.0
+typing-extensions>=4.8.0
+psutil>=5.9.0  # For performance monitoring
+
+# LangChain core (required)
+langchain>=0.1.0
+langchain-community>=0.0.10
+
+# Vector store (required)
+chromadb>=0.4.0
+
+# Document processing (required)
+pypdf>=3.15.0
+
+# Text processing (required)
+rank-bm25>=0.2.2
+
+# Optional dependencies for different providers
+# Install only what you need to reduce bundle size
+
+# For Google/Gemini (optional)
+# langchain-google-genai>=0.0.5
+# google-generativeai>=0.3.0
+
+# For OpenAI (optional)
+# langchain-openai>=0.0.5
+
+# For embedding models (optional - choose lighter alternatives)
+# sentence-transformers>=2.2.0  # Heavy dependency ~500MB
+# scikit-learn>=1.3.0           # Can be optional for some use cases
+
+# Alternative lightweight embeddings (recommended)
+# transformers>=4.21.0
+# torch>=2.0.0  # Only if using local models

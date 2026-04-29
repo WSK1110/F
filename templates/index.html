@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Daily Prophet - Financial Wire Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --paper-bg: #F5F0E1;
+            --ink-black: #1A1A1A;
+            --border-dark: #333333;
+            --wax-red: #8B2323;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--paper-bg);
+            color: var(--ink-black);
+            font-size: 13px;
+            line-height: 1.5;
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E"),
+                linear-gradient(135deg, transparent 40%, rgba(0,0,0,0.02) 50%, transparent 60%),
+                linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.015) 50%, transparent 60%);
+            text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.1);
+        }
+
+        /* ===== LAYOUT CONTAINER ===== */
+        .newspaper-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 10px 15px;
+        }
+
+        /* ===== MASTHEAD ===== */
+        .masthead {
+            border-bottom: 4px double var(--border-dark);
+            padding-bottom: 8px;
+            position: relative;
+        }
+
+        .masthead-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid var(--border-dark);
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+            opacity: 0;
+        }
+
+        .masthead-date {
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        .masthead-title {
+            font-family: 'IM Fell English', 'Times New Roman', serif;
+            font-size: 36px;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid var(--ink-black);
+            /* JS will fill chars one by one */
+        }
+
+        @keyframes typewriter-title {
+            from { width: 0; }
+            to   { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            50% { border-color: transparent; }
+        }
+
+        .masthead-tagline {
+            text-align: center;
+            font-style: italic;
+            font-size: 10px;
+            margin-top: 4px;
+            letter-spacing: 1px;
+            opacity: 0;
+        }
+
+        .masthead-edition {
+            font-size: 10px;
+            font-style: italic;
+            text-align: right;
+        }
+
+        .wax-seal {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .wax-seal img {
+            width: 100%;
+            height: 100%;
+            transform: rotate(15deg);
+        }
+
+        .masthead-tagline {
+            text-align: center;
+            font-style: italic;
+            font-size: 10px;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        .main-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            gap: 15px;
+            overflow: hidden;
+            padding: 10px 0;
+        }
+
+        /* ===== LEFT SIDEBAR ===== */
+        .sidebar-left {
+            border-right: 2px solid var(--border-dark);
+            padding-right: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar-section {
+            padding: 8px 0;
+        }
+
+        .sidebar-heading {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--border-dark);
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--border-dark);
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .upload-box:hover {
+            background-color: rgba(0,0,0,0.03);
+        }
+
+        .upload-box.dragover {
+            border-color: var(--wax-red);
+            background-color: rgba(139, 35, 35, 0.05);
+        }
+
+        .upload-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            font-size: 10px;
+            font-style: italic;
+            margin-top: 5px;
+            min-height: 14px;
+        }
+
+        .upload-btn {
+            display: block;
+            width: 100%;
+            padding: 6px 10px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--ink-black);
+            color: var(--paper-bg);
+            border: none;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            background: var(--wax-red);
+        }
+
+        .clear-btn {
+            display: block;
+            width: 100%;
+            padding: 4px 10px;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--ink-black);
+            border: 1px solid var(--border-dark);
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            background: var(--ink-black);
+            color: var(--paper-bg);
+        }
+
+        /* LLM Provider Section */
+        .provider-section {
+            margin-top: 10px;
+        }
+
+        .provider-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 10px;
+        }
+
+        .provider-label {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .provider-input {
+            width: 90px;
+            padding: 3px 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            border: 1px solid var(--border-dark);
+            background: var(--paper-bg);
+            color: var(--ink-black);
+        }
+
+        .provider-input:focus {
+            outline: none;
+            border-color: var(--wax-red);
+        }
+
+        select.provider-input {
+            width: 90px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: none;
+        }
+
+        .provider-display {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: var(--ink-black);
+            padding: 3px 5px;
+        }
+
+        /* ===== CENTER CHAT AREA ===== */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid var(--border-dark);
+        }
+
+        .chat-header {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--ink-black);
+            color: var(--paper-bg);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--paper-bg);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-dark);
+        }
+
+        .message-block {
+            padding: 12px 0;
+            border-bottom: 1px dotted var(--border-dark);
+        }
+
+        .message-block:last-child {
+            border-bottom: none;
+        }
+
+        .message-headline {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: underline;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .message-body {
+            font-size: 12px;
+            line-height: 1.6;
+            padding-left: 15px;
+            text-indent: -15px;
+        }
+
+        .message-body pre {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            margin: 0;
+            text-indent: 0;
+        }
+
+        .sources-block {
+            margin-top: 8px;
+            padding: 6px 8px;
+            border: 1px dashed var(--border-dark);
+            font-size: 9px;
+        }
+
+        .sources-title {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .sources-list {
+            list-style: none;
+            font-style: italic;
+        }
+
+        .sources-list li {
+            padding-left: 8px;
+            border-left: 2px solid var(--wax-red);
+            margin: 2px 0;
+        }
+
+        .message-separator {
+            text-align: center;
+            padding: 5px 0;
+            font-size: 10px;
+            color: var(--border-dark);
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .loading-indicator.active {
+            display: block;
+        }
+
+        .loading-text {
+            font-style: italic;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            padding: 10px;
+            border-top: 2px solid var(--border-dark);
+            background: rgba(245, 240, 225, 0.95);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        #questionInput {
+            flex: 1;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 2px solid var(--border-dark);
+            background: var(--paper-bg);
+            color: var(--ink-black);
+        }
+
+        #questionInput:focus {
+            outline: none;
+            border-color: var(--wax-red);
+        }
+
+        .transmit-btn {
+            padding: 8px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--ink-black);
+            color: var(--paper-bg);
+            border: none;
+            cursor: pointer;
+        }
+
+        .transmit-btn:hover {
+            background: var(--wax-red);
+        }
+
+        .transmit-btn:disabled {
+            background: #888;
+            cursor: not-allowed;
+        }
+
+        .clear-chat-btn {
+            padding: 8px 15px;
+            margin-left: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: transparent;
+            color: var(--ink-black);
+            border: 1px solid var(--border-dark);
+            cursor: pointer;
+        }
+
+        .clear-chat-btn:hover {
+            background: var(--ink-black);
+            color: var(--paper-bg);
+        }
+
+        /* ===== RIGHT PANEL ===== */
+        .sidebar-right {
+            border-left: 2px solid var(--border-dark);
+            padding-left: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .data-section {
+            padding: 8px 0;
+        }
+
+        .data-heading {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--border-dark);
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        /* Metrics Table */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .metrics-table th {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border-dark);
+            padding: 4px 3px;
+            text-align: left;
+            font-weight: normal;
+        }
+
+        .metrics-table td {
+            padding: 3px 3px;
+            border-bottom: 1px dotted var(--border-dark);
+        }
+
+        .metrics-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-style: italic;
+        }
+
+        /* Charts Placeholder */
+        .charts-placeholder {
+            border: 2px dashed var(--border-dark);
+            padding: 20px 10px;
+            text-align: center;
+            font-style: italic;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Status Indicator */
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            padding: 3px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4a4;
+            margin-right: 5px;
+        }
+
+        .status-indicator.offline {
+            background: #a44;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            border-top: 3px double var(--border-dark);
+            padding-top: 6px;
+            text-align: center;
+            font-size: 9px;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 180px 1fr 180px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+
+            .sidebar-left,
+            .sidebar-right {
+                border: none;
+                border-bottom: 2px solid var(--border-dark);
+                padding-bottom: 10px;
+            }
+
+            .sidebar-left {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .sidebar-left .sidebar-section {
+                flex: 1;
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="newspaper-container">
+        <!-- ===== MASTHEAD ===== -->
+        <header class="masthead">
+            <div class="wax-seal">
+                <img src="/static/wax_seal.png" alt="Wax Seal">
+            </div>
+            <div class="masthead-top">
+                <span class="masthead-date" id="currentDate">April 23, 2026 — Overcast, London</span>
+                <span class="masthead-edition">Vol. CXXIV — No. 547<br>Special Wire Edition</span>
+            </div>
+            <h1 class="masthead-title" id="mastheadTitle">THE DAILY PROPHET</h1>
+            <p class="masthead-tagline" id="mastheadTagline">"All the News That's Fit to Pen" — Est. 1901</p>
+        </header>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content">
+            <!-- ===== LEFT SIDEBAR ===== -->
+            <aside class="sidebar-left">
+                <div class="sidebar-section">
+                    <h2 class="sidebar-heading">Market Intelligence</h2>
+
+                    <div class="upload-box" id="uploadBox">
+                        <div class="upload-label">Submit Documents</div>
+                        <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx">
+                    </div>
+                    <div class="file-info" id="fileInfo"></div>
+                    <button class="upload-btn" id="uploadBtn">Transmit Document</button>
+                    <button class="clear-btn" id="clearBtn">Clear Selection</button>
+                </div>
+
+                <div class="sidebar-section provider-section">
+                    <h2 class="sidebar-heading">LLM Configuration</h2>
+
+                    <div class="provider-row">
+                        <span class="provider-label">Provider:</span>
+                        <select class="provider-input" id="providerSelect">
+                            <option value="minimax">MiniMax</option>
+                            <option value="gemini">Google Gemini</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic Claude</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="zhipu">智谱 GLM</option>
+                            <option value="baidu">百度 ERNIE</option>
+                            <option value="aliyun">阿里 Qwen</option>
+                            <option value="bytedance">字节豆包</option>
+                            <option value="siliconflow">硅基流动</option>
+                            <option value="groq">Groq</option>
+                            <option value="together">Together AI</option>
+                            <option value="openai_compat">自定义 OpenAI 兼容</option>
+                            <option value="ollama">Ollama 本地</option>
+                        </select>
+                    </div>
+
+                    <div class="provider-row">
+                        <span class="provider-label">Model:</span>
+                        <select class="provider-input" id="modelSelect">
+                            <option value="MiniMax-M2.7">MiniMax-M2.7</option>
+                        </select>
+                    </div>
+
+                    <div class="provider-row">
+                        <span class="provider-label">API Key:</span>
+                        <input type="password" class="provider-input" id="apiKeyInput" placeholder="env: ~/.hermes/.env">
+                    </div>
+                    <div class="provider-row" id="baseUrlRow" style="display:none;">
+                        <span class="provider-label">Base URL:</span>
+                        <input type="text" class="provider-input" id="baseUrlInput" placeholder="https://api.example.com/v1" style="width:130px;">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="sidebar-heading">Advanced Features</h2>
+
+                    <div class="provider-row">
+                        <label class="provider-label" style="cursor:pointer;">
+                            <input type="checkbox" id="useHydeCheck" style="margin-right:4px;">
+                            HyDE Query
+                        </label>
+                    </div>
+                    <div class="provider-row">
+                        <label class="provider-label" style="cursor:pointer;">
+                            <input type="checkbox" id="useRerankCheck" style="margin-right:4px;">
+                            Reranking
+                        </label>
+                    </div>
+                    <div class="provider-row">
+                        <label class="provider-label" style="cursor:pointer;">
+                            <input type="checkbox" id="useVerifyCheck" style="margin-right:4px;">
+                            Faithfulness Check
+                        </label>
+                    </div>
+                    <div class="provider-row">
+                        <label class="provider-label" style="cursor:pointer;">
+                            <input type="checkbox" id="useSqlCheck" style="margin-right:4px;" checked>
+                            Text-to-SQL
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="sidebar-heading">Connection Status</h2>
+                    <div class="status-row">
+                        <span class="status-indicator" id="connectionIndicator"></span>
+                        <span id="connectionStatus">Checking...</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ===== CENTER CHAT AREA ===== -->
+            <section class="chat-area">
+                <div class="chat-header">
+                    <span id="chatHeaderTitle">News Wire — Query Transmission</span>
+                    <span id="apiStatus">System Online</span>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be inserted here -->
+                </div>
+
+                <div class="loading-indicator" id="loading">
+                    <span class="loading-text">— Transmitting —</span>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="input-row">
+                        <input type="text" id="questionInput" placeholder="Enter your query to the news wire...">
+                        <button class="transmit-btn" id="sendBtn">Transmit</button>
+                        <button class="clear-chat-btn" id="clearChatBtn">Clear</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== RIGHT PANEL ===== -->
+            <aside class="sidebar-right">
+                <div class="data-section">
+                    <h2 class="data-heading">Financial Data</h2>
+
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Queries</th>
+                                <th>Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricsBody">
+                            <tr>
+                                <td class="metric-label">Today</td>
+                                <td id="queryCount">0</td>
+                                <td id="avgLatency">--</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-label">Documents</td>
+                                <td id="docCount">0</td>
+                                <td>--</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-label">Tokens</td>
+                                <td id="tokensUsed">--</td>
+                                <td>--</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-label">Last Response</td>
+                                <td id="responseTime">--</td>
+                                <td>ms</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-label">Cache Hit</td>
+                                <td id="cacheHit">--</td>
+                                <td>--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="data-section">
+                    <h2 class="data-heading">Performance Charts</h2>
+                    <div class="charts-placeholder">
+                        Charts Awaiting Data
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- ===== FOOTER ===== -->
+                <footer id="footerText">The Daily Prophet | Financial Wire Service | All Rights Reserved</footer>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        let uploadedFileName = '';
+        let requestCount = 0;
+        const latencies = [];
+
+        // ===== DOM ELEMENTS =====
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const chatMessages = document.getElementById('chatMessages');
+        const questionInput = document.getElementById('questionInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const loading = document.getElementById('loading');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectionIndicator = document.getElementById('connectionIndicator');
+        const apiStatus = document.getElementById('apiStatus');
+        const responseTime = document.getElementById('responseTime');
+        const avgLatency = document.getElementById('avgLatency');
+        const tokensUsed = document.getElementById('tokensUsed');
+        const cacheHit = document.getElementById('cacheHit');
+        const currentDate = document.getElementById('currentDate');
+        const docCount = document.getElementById('docCount');
+        const queryCount = document.getElementById('queryCount');
+        const providerSelect = document.getElementById('providerSelect');
+
+        // ===== MODEL SELECT UPDATE =====
+        const PROVIDER_MODELS = {
+            'minimax': [
+                { value: 'MiniMax-M2.7', label: 'MiniMax-M2.7 (flagship)' },
+                { value: 'MiniMax-M2', label: 'MiniMax-M2 (fast)' },
+                { value: 'MiniMax-M1', label: 'MiniMax-M1' },
+                { value: 'abab6.5s-chat', label: 'abab6.5s-chat' },
+                { value: 'abab6-chat', label: 'abab6-chat' },
+                { value: 'abab5.5s-chat', label: 'abab5.5s-chat' },
+            ],
+            'gemini': [
+                { value: 'models/gemini-2.5-pro-exp-03-25', label: 'Gemini 2.5 Pro (experimental)' },
+                { value: 'models/gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+                { value: 'models/gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite' },
+                { value: 'models/gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+                { value: 'models/gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+                { value: 'models/gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B' },
+                { value: 'models/gemini-1.5-pro-latest', label: 'Gemini 1.5 Pro (latest)' },
+                { value: 'models/gemini-1.0-pro', label: 'Gemini 1.0 Pro' },
+            ],
+            'openai': [
+                { value: 'gpt-4.1', label: 'GPT-4.1' },
+                { value: 'gpt-4.1-mini', label: 'GPT-4.1 mini' },
+                { value: 'gpt-4.1-nano', label: 'GPT-4.1 nano' },
+                { value: 'gpt-4o', label: 'GPT-4o' },
+                { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
+                { value: 'gpt-4o-audi', label: 'GPT-4o Audio' },
+                { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+                { value: 'gpt-4', label: 'GPT-4' },
+                { value: 'o3', label: 'O3' },
+                { value: 'o3-mini', label: 'O3 Mini' },
+                { value: 'o4-mini', label: 'O4 Mini' },
+                { value: 'o1', label: 'O1' },
+                { value: 'o1-mini', label: 'O1 Mini' },
+                { value: 'gpt-4.5-preview', label: 'GPT-4.5 Preview' },
+                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+            ],
+            'anthropic': [
+                { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
+                { value: 'claude-opus-4-20250514', label: 'Claude Opus 4' },
+                { value: 'claude-haiku-4-20250514', label: 'Claude Haiku 4' },
+                { value: 'claude-sonnet-4-6-20250514', label: 'Claude Sonnet 4.6' },
+                { value: 'claude-opus-4-6-20250514', label: 'Claude Opus 4.6' },
+                { value: 'claude-opus-4-7-20250428', label: 'Claude Opus 4.7' },
+                { value: 'claude-sonnet-4-6-20250428', label: 'Claude Sonnet 4.6 (alt)' },
+                { value: 'claude-opus-4-6-20250428', label: 'Claude Opus 4.6 (alt)' },
+                { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
+                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet V2' },
+                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' },
+                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+                { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
+                { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
+            ],
+            'deepseek': [
+                { value: 'deepseek-chat', label: 'DeepSeek V3' },
+                { value: 'deepseek-reasoner', label: 'DeepSeek R1' },
+            ],
+            'zhipu': [
+                { value: 'glm-5', label: 'GLM-5' },
+                { value: 'glm-4-plus', label: 'GLM-4 Plus' },
+                { value: 'glm-4-air', label: 'GLM-4 Air' },
+                { value: 'glm-4-flash', label: 'GLM-4 Flash (free)' },
+                { value: 'glm-4-long', label: 'GLM-4 Long (128K)' },
+            ],
+            'baidu': [
+                { value: 'ernie-4.0', label: 'ERNIE 4.0' },
+                { value: 'ernie-3.5', label: 'ERNIE 3.5' },
+                { value: 'ernie-speed', label: 'ERNIE Speed' },
+                { value: 'ernie-lite', label: 'ERNIE Lite' },
+            ],
+            'aliyun': [
+                { value: 'qwen-max', label: 'Qwen Max' },
+                { value: 'qwen-plus', label: 'Qwen Plus' },
+                { value: 'qwen-turbo', label: 'Qwen Turbo' },
+                { value: 'qwen-long', label: 'Qwen Long (10M)' },
+                { value: 'qwen2.5-72b-instruct', label: 'Qwen 2.5 72B' },
+            ],
+            'bytedance': [
+                { value: 'doubao-pro-32k', label: '豆包 Pro 32K' },
+                { value: 'doubao-pro-128k', label: '豆包 Pro 128K' },
+                { value: 'doubao-lite-32k', label: '豆包 Lite 32K' },
+                { value: 'doubao-lite-128k', label: '豆包 Lite 128K' },
+            ],
+            'siliconflow': [
+                { value: 'Pro/deepseek-ai/DeepSeek-V3', label: 'DeepSeek V3' },
+                { value: 'Pro/deepseek-ai/DeepSeek-R1', label: 'DeepSeek R1' },
+                { value: 'Pro/Qwen/Qwen2.5-72B-Instruct', label: 'Qwen 2.5 72B' },
+                { value: 'Pro/meta-llama/Meta-Llama-3.1-70B', label: 'Llama 3.1 70B' },
+            ],
+            'groq': [
+                { value: 'llama3-70b-8192', label: 'Llama 3 70B' },
+                { value: 'llama3-8b-8192', label: 'Llama 3 8B' },
+                { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' },
+                { value: 'gemma2-9b-it', label: 'Gemma 2 9B' },
+                { value: 'deepseek-r1-distill-llama-70b', label: 'DeepSeek R1 70B' },
+            ],
+            'together': [
+                { value: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', label: 'Llama 3.3 70B' },
+                { value: 'meta-llama/Meta-Llama-3.1-405B', label: 'Llama 3.1 405B' },
+                { value: 'deepseek-ai/DeepSeek-V3', label: 'DeepSeek V3' },
+                { value: 'deepseek-ai/DeepSeek-R1', label: 'DeepSeek R1' },
+                { value: 'mistralai/Mixtral-8x22B-Instruct-v0.1', label: 'Mixtral 8x22B' },
+            ],
+            'openai_compat': [
+                { value: '', label: '自定义 (在 Base URL 填写)' },
+            ],
+            'ollama': [
+                { value: 'llama3.3', label: 'Llama 3.3 70B' },
+                { value: 'llama3.2', label: 'Llama 3.2 1B/3B' },
+                { value: 'llama3.1', label: 'Llama 3.1 8B/70B/405B' },
+                { value: 'llama3', label: 'Llama 3 8B/70B' },
+                { value: 'llama2', label: 'Llama 2' },
+                { value: 'qwen2.5', label: 'Qwen 2.5 7B/72B' },
+                { value: 'qwen2', label: 'Qwen 2' },
+                { value: 'qwen', label: 'Qwen' },
+                { value: 'deepseek-r1', label: 'DeepSeek R1' },
+                { value: 'deepseek-r1:32b', label: 'DeepSeek R1 32B' },
+                { value: 'deepseek-r1:7b', label: 'DeepSeek R1 7B' },
+                { value: 'deepseek-r1:1.5b', label: 'DeepSeek R1 1.5B' },
+                { value: 'mistral', label: 'Mistral 7B' },
+                { value: 'mistral-nemo', label: 'Mistral Nemo' },
+                { value: 'mixtral', label: 'Mixtral 8x7B' },
+                { value: 'codellama', label: 'Code Llama' },
+                { value: 'phi3', label: 'Phi-3' },
+                { value: 'gemma2', label: 'Gemma 2' },
+                { value: 'nemotron', label: 'Nemotron' },
+                { value: 'command-r', label: 'Command R' },
+                { value: 'command-r-plus', label: 'Command R+' },
+            ],
+        };
+
+        function updateModelSelect() {
+            const provider = providerSelect.value;
+            const modelSelect = document.getElementById('modelSelect');
+            const baseUrlRow = document.getElementById('baseUrlRow');
+            if (!modelSelect) return;
+            const models = PROVIDER_MODELS[provider] || [];
+            modelSelect.innerHTML = models.map(m =>
+                `<option value="${m.value}">${m.label}</option>`
+            ).join('');
+
+            // Show/hide base URL input for custom OpenAI-compatible
+            baseUrlRow.style.display = provider === 'openai_compat' ? 'flex' : 'none';
+        }
+
+        providerSelect.addEventListener('change', updateModelSelect);
+        updateModelSelect(); // initialize on load
+
+        // ===== INITIALIZATION =====
+        let healthCheckInterval;
+        let dateUpdateInterval;
+        let firstHealthCheck = true;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            dateUpdateInterval = setInterval(updateDate, 60000);
+            firstHealthCheck = true;
+            checkHealth();
+            healthCheckInterval = setInterval(checkHealth, 30000);
+            // Typewriter effect runs once on page load (not every minute)
+            triggerMastheadEffect();
+        });
+
+        // ===== CLEANUP ON UNLOAD =====
+        window.addEventListener('beforeunload', () => {
+            if (dateUpdateInterval) clearInterval(dateUpdateInterval);
+            if (healthCheckInterval) clearInterval(healthCheckInterval);
+        });
+
+        // ===== MASTHEAD TYPEWRITER EFFECT =====
+        function triggerMastheadEffect() {
+            const topBar = document.querySelector('.masthead-top');
+            const seal   = document.querySelector('.wax-seal');
+
+            const items = [
+                { el: document.querySelector('.masthead-date'),
+                  text: 'Thursday, 23 April 2026' },
+                { el: document.querySelector('.masthead-edition'),
+                  text: 'Vol. CXXIV \u2014 No. 547 Special Wire Edition' },
+                { el: document.getElementById('mastheadTitle'),
+                  text: 'THE DAILY PROPHET' },
+                { el: document.getElementById('mastheadTagline'),
+                  text: '"All the News That\'s Fit to Pen"\u2014 Est. 1901' },
+                { el: document.querySelector('.sidebar-left .sidebar-heading'),
+                  text: 'MARKET INTELLIGENCE' },
+                { el: document.querySelector('.upload-label'),
+                  text: 'Submit Documents' },
+                { el: document.getElementById('uploadBtn'),
+                  text: 'TRANSMIT DOCUMENT' },
+                { el: document.getElementById('clearBtn'),
+                  text: 'CLEAR SELECTION' },
+                { el: document.querySelector('.provider-section .sidebar-heading'),
+                  text: 'LLM CONFIGURATION' },
+                { el: document.querySelector('.sidebar-left .sidebar-section:nth-child(3) .sidebar-heading'),
+                  text: 'CONNECTION STATUS' },
+                { el: document.getElementById('chatHeaderTitle'),
+                  text: 'NEWS WIRE \u2014 QUERY TRANSMISSION' },
+                { el: document.getElementById('questionInput'),
+                  isPlaceholder: true, text: 'Enter your query to the news wire...' },
+                { el: document.getElementById('sendBtn'),
+                  text: 'TRANSMIT' },
+                { el: document.getElementById('clearChatBtn'),
+                  text: 'CLEAR' },
+                { el: document.querySelector('.sidebar-right .sidebar-section:nth-child(1) .sidebar-heading'),
+                  text: 'FINANCIAL DATA' },
+                { el: document.querySelector('.sidebar-right .sidebar-section:nth-child(2) .sidebar-heading'),
+                  text: 'PERFORMANCE CHARTS' },
+                { el: document.getElementById('footerText'),
+                  text: 'The Daily Prophet | Financial Wire Service | All Rights Reserved' },
+            ];
+
+            // Hide all initially
+            if (topBar) topBar.style.opacity = '0';
+            if (seal)   seal.style.opacity = '0';
+            items.forEach(({ el }) => {
+                if (el) {
+                    el.textContent = '';
+                    el.style.opacity = '1';
+                }
+            });
+
+            // Fade topbar in first
+            if (topBar) {
+                setTimeout(() => {
+                    topBar.style.transition = 'opacity 0.2s ease';
+                    topBar.style.opacity = '1';
+                }, 50);
+            }
+
+            // Each item gets its own interval — all start together, all finish ≤ 1 s
+            const TOTAL_MS = 1000;
+            const TICK_MS  = 50;
+
+            items.forEach(({ el, text, isPlaceholder }) => {
+                if (!el) return;
+                // How many chars per tick so this item finishes within TOTAL_MS
+                const ticks     = Math.ceil(text.length / (TOTAL_MS / TICK_MS));
+                const charsHere = Math.max(1, ticks);          // ≥ 1 char/tick
+                let charIdx = 0;
+
+                const iv = setInterval(() => {
+                    charIdx += charsHere;
+                    const partial = text.substring(0, charIdx);
+                    if (isPlaceholder) {
+                        el.placeholder = partial;
+                    } else {
+                        el.textContent = partial;
+                    }
+                    if (charIdx >= text.length) {
+                        clearInterval(iv);
+                        // Ensure final text is exact
+                        if (isPlaceholder) {
+                            el.placeholder = text;
+                        } else {
+                            el.textContent = text;
+                        }
+                    }
+                }, TICK_MS);
+            });
+
+            // Wax seal fades in after all text is done
+            setTimeout(() => {
+                if (seal) { seal.style.transition = 'opacity 0.3s ease'; seal.style.opacity = '1'; }
+            }, TOTAL_MS + 80);
+        }
+
+        // ===== DATE UPDATE =====
+        function updateDate() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            currentDate.textContent = now.toLocaleDateString('en-GB', options);
+        }
+
+        // ===== FILE UPLOAD HANDLING =====
+        uploadBox.addEventListener('click', () => fileInput.click());
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            uploadedFileName = file.name;
+            fileInfo.textContent = `Selected: ${file.name} (${formatBytes(file.size)})`;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // ===== UPLOAD BUTTON =====
+        uploadBtn.addEventListener('click', async () => {
+            if (!fileInput.files.length && !uploadedFileName) {
+                addSystemMessage('Please select a document first.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (!file) {
+                addSystemMessage('Please select a valid document.');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const formData = new FormData();
+                formData.append('files', file);
+
+                const startTime = performance.now();
+                const response = await fetch('http://localhost:8000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const endTime = performance.now();
+
+                if (!response.ok) throw new Error('Upload failed');
+
+                const result = await response.json();
+                recordLatency(endTime - startTime);
+                docCount.textContent = parseInt(docCount.textContent || 0) + 1;
+
+                addSystemMessage(`Document "${file.name}" uploaded successfully. ${result.message || 'Ready for queries.'}`);
+                fileInfo.textContent = '';
+                fileInput.value = '';
+                uploadedFileName = '';
+
+            } catch (error) {
+                addSystemMessage(`Upload failed: ${error.message}. Ensure FastAPI server is running on localhost:8000`);
+                connectionIndicator.classList.add('offline');
+                apiStatus.textContent = 'Error';
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // ===== CLEAR BUTTONS =====
+        clearBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            uploadedFileName = '';
+            fileInfo.textContent = '';
+        });
+
+        clearChatBtn.addEventListener('click', () => {
+            chatMessages.innerHTML = '';
+            addSystemMessage('Transmission history cleared.');
+        });
+
+        // ===== SEND MESSAGE =====
+        // ===== SEND MESSAGE (Streaming SSE) =====
+        sendBtn.addEventListener('click', sendMessage);
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            addQuestion(question);
+            questionInput.value = '';
+            showLoading(true);
+
+            // Container for streamed answer
+            let answerBlock = null;
+            let answerBody = null;
+            let answerPre = null;
+            let sourcesBlock = null;
+            const startTime = performance.now();
+
+            // Text-to-SQL pre-check: route table questions to SQL endpoint
+            const useSql = document.getElementById('useSqlCheck').checked;
+            if (useSql) {
+                try {
+                    const sqlResp = await fetch('http://localhost:8000/ask/table', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: question })
+                    });
+                    const sqlResult = await sqlResp.json();
+                    if (sqlResult.has_data) {
+                        addSqlResult(question, sqlResult);
+                        recordLatency(performance.now() - startTime);
+                        showLoading(false);
+                        return;
+                    }
+                } catch (_) { /* SQL failed silently — fall through to RAG */ }
+            }
+
+            try {
+                // Auto-detect ticker from question (uppercase, 1-5 letters)
+                const tickerMatch = question.match(/\b([A-Z]{1,5})\b/);
+                const detectedTicker = tickerMatch ? tickerMatch[1] : null;
+                const tickerAlways = document.getElementById('tickerAlwaysCheck')?.checked ?? true;
+
+                if (detectedTicker && tickerAlways) {
+                    const ingestResp = await fetch(`http://localhost:8000/ingest/ticker/${detectedTicker}`, {
+                        method: 'POST',
+                    });
+                    if (ingestResp.ok) {
+                        const ingestResult = await ingestResp.json();
+                        addSystemMessage(`📡 SEC EDGAR: Ingested ${detectedTicker} 10-K (${ingestResult.year || '?'}) — ${ingestResult.chunks_created || 0} chunks created.`);
+                    }
+                }
+
+                const response = await fetch('http://localhost:8000/ask/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        llm_provider: providerSelect.value,
+                        llm_model: document.getElementById('modelSelect').value,
+                        llm_base_url: document.getElementById('baseUrlInput').value,
+                        use_hyde: document.getElementById('useHydeCheck').checked,
+                        use_rerank: document.getElementById('useRerankCheck').checked,
+                    })
+                });
+
+                if (!response.ok) {
+                    let errMsg = 'Request failed';
+                    try { const errData = await response.json(); errMsg = errData.detail || errData.error || `HTTP ${response.status}`; } catch (_) {}
+                    throw new Error(errMsg);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let eventName = '';
+                let done = false;
+                let fullAnswer = '';
+
+                // Create initial answer block (empty, we'll append tokens)
+                const initAnswerBlock = () => {
+                    if (answerBlock) return;
+                    answerBlock = document.createElement('div');
+                    answerBlock.className = 'message-block';
+                    answerBody = document.createElement('div');
+                    answerBody.className = 'message-body';
+                    answerPre = document.createElement('pre');
+                    answerPre.style.whiteSpace = 'pre-wrap';
+                    answerPre.style.wordBreak = 'break-word';
+                    answerPre.textContent = '';
+                    answerBody.appendChild(answerPre);
+                    answerBlock.appendChild(answerBody);
+                    chatMessages.appendChild(answerBlock);
+                };
+
+                const finalizeAnswer = () => {
+                    if (!answerBlock) return;
+                    const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    if (sourcesBlock) {
+                        answerBlock.appendChild(sourcesBlock);
+                    }
+                    const meta = document.createElement('div');
+                    meta.className = 'message-meta';
+                    meta.style.fontSize = '9px';
+                    meta.style.marginTop = '8px';
+                    meta.textContent = `The Daily Prophet Wire Service | ${timeStr}`;
+                    answerBlock.appendChild(meta);
+                    answerBlock.appendChild(createSeparator());
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                };
+
+                while (!done) {
+                    const { done: readerDone, value } = await reader.read();
+                    if (readerDone) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    // Keep the last incomplete line in buffer
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('event:')) {
+                            eventName = line.slice(6).trim();
+                        } else if (line.startsWith('data:')) {
+                            const data = line.slice(6);
+
+                            if (eventName === 'sources') {
+                                // Initialize answer block when sources arrive
+                                initAnswerBlock();
+                                const sources = JSON.parse(data || '[]');
+                                sourcesBlock = document.createElement('div');
+                                sourcesBlock.className = 'sources-block';
+                                sourcesBlock.innerHTML = `
+                                    <div class="sources-title">Source Documents:</div>
+                                    <ul class="sources-list">
+                                        ${sources.map(s => `<li>${s}</li>`).join('')}
+                                    </ul>
+                                `;
+                                eventName = '';
+                            } else if (eventName === 'ratios') {
+                                // Ratios received — stored for later display
+                                eventName = '';
+                            } else if (eventName === 'risks') {
+                                // Risks received — stored for later display
+                                eventName = '';
+                            } else if (eventName === '') {
+                                // Default event: token chunk
+                                if (data === '[DONE]') {
+                                    done = true;
+                                    break;
+                                }
+                                if (data.startsWith('[ERROR]')) {
+                                    done = true;
+                                    addSystemMessage(`LLM Error: ${data.slice(7)}`);
+                                    break;
+                                }
+                                if (!answerBlock) initAnswerBlock();
+                                // Unescape SSE-escaped newlines
+                                const token = data.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+                                fullAnswer += token;
+                                answerPre.textContent = fullAnswer;
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }
+                        }
+                    }
+                }
+
+                const endTime = performance.now();
+                recordLatency(endTime - startTime);
+                requestCount++;
+                queryCount.textContent = requestCount;
+                responseTime.textContent = Math.round(endTime - startTime);
+                cacheHit.textContent = 'No';
+                finalizeAnswer();
+
+            } catch (error) {
+                addSystemMessage(`Transmission failed: ${error.message}. Check server connection.`);
+                connectionIndicator.classList.add('offline');
+                apiStatus.textContent = 'Error';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ===== MESSAGE RENDERING =====
+        function addQuestion(text) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            const block = document.createElement('div');
+            block.className = 'message-block';
+
+            const headline = document.createElement('div');
+            headline.className = 'message-headline';
+            headline.textContent = `Query: ${text.toUpperCase()}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.style.fontSize = '9px';
+            meta.style.marginBottom = '5px';
+            meta.textContent = `Received at ${timeStr}`;
+
+            block.appendChild(headline);
+            block.appendChild(meta);
+            block.appendChild(createSeparator());
+
+            chatMessages.appendChild(block);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addAnswer(text, sources) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            const block = document.createElement('div');
+            block.className = 'message-block';
+
+            const body = document.createElement('div');
+            body.className = 'message-body';
+
+            const pre = document.createElement('pre');
+            pre.textContent = text;
+            body.appendChild(pre);
+
+            block.appendChild(body);
+
+            if (sources && sources.length > 0) {
+                const sourcesBlock = document.createElement('div');
+                sourcesBlock.className = 'sources-block';
+                sourcesBlock.innerHTML = `
+                    <div class="sources-title">Source Documents:</div>
+                    <ul class="sources-list">
+                        ${sources.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                `;
+                block.appendChild(sourcesBlock);
+            }
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.style.fontSize = '9px';
+            meta.style.marginTop = '8px';
+            meta.textContent = `The Daily Prophet Wire Service | ${timeStr}`;
+
+            block.appendChild(meta);
+            block.appendChild(createSeparator());
+
+            chatMessages.appendChild(block);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addSqlResult(question, result) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            const block = document.createElement('div');
+            block.className = 'message-block';
+            block.style.borderLeft = '3px solid #8B2323';
+            block.style.paddingLeft = '10px';
+
+            const headline = document.createElement('div');
+            headline.className = 'message-headline';
+            headline.textContent = `[Data Query] ${question}`;
+
+            const body = document.createElement('div');
+            body.className = 'message-body';
+
+            const ansP = document.createElement('p');
+            ansP.textContent = result.answer || 'Query executed successfully.';
+            ansP.style.marginBottom = '8px';
+            body.appendChild(ansP);
+
+            if (result.sql) {
+                const sqlDiv = document.createElement('div');
+                sqlDiv.style.fontSize = '9px';
+                sqlDiv.style.fontFamily = 'monospace';
+                sqlDiv.style.background = 'rgba(0,0,0,0.05)';
+                sqlDiv.style.padding = '4px 6px';
+                sqlDiv.style.marginTop = '6px';
+                sqlDiv.textContent = `SQL: ${result.sql}`;
+                body.appendChild(sqlDiv);
+            }
+
+            if (result.total_rows !== undefined) {
+                const countDiv = document.createElement('div');
+                countDiv.style.fontSize = '9px';
+                countDiv.style.marginTop = '4px';
+                countDiv.style.fontStyle = 'italic';
+                countDiv.textContent = `${result.total_rows} row(s) returned`;
+                body.appendChild(countDiv);
+            }
+
+            block.appendChild(headline);
+            block.appendChild(body);
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.style.fontSize = '9px';
+            meta.style.marginTop = '5px';
+            meta.textContent = `Data Query | ${timeStr}`;
+
+            block.appendChild(meta);
+            block.appendChild(createSeparator());
+
+            chatMessages.appendChild(block);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addFinancialSummary(data) {
+            if (!data || (!data.financial_ratios && !data.risk_signals)) return;
+            if (!data.financial_ratios?.ratios && !data.risk_signals?.risk_signals?.length) return;
+
+            const container = document.createElement('div');
+            container.style.marginTop = '10px';
+            container.style.borderTop = '1px dashed rgba(139,35,35,0.3)';
+            container.style.paddingTop = '8px';
+
+            let html = '';
+
+            if (data.financial_ratios?.ratios) {
+                const ratios = data.financial_ratios.ratios;
+                const ratioNames = {
+                    profit_margin: 'Net Margin',
+                    roe: 'ROE',
+                    roa: 'ROA',
+                    gross_margin: 'Gross Margin',
+                    current_ratio: 'Current Ratio',
+                    quick_ratio: 'Quick Ratio',
+                    debt_to_equity: 'Debt/Equity',
+                    debt_to_equity_exact: 'Debt/Equity (Gross)',
+                    equity_ratio: 'Equity Ratio',
+                };
+                html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;color:rgba(180,160,100,0.8);">Financial Ratios</div>';
+                html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+                for (const [key, val] of Object.entries(ratios)) {
+                    if (val !== null && val !== undefined) {
+                        const name = ratioNames[key] || key;
+                        const display = (key.includes('margin') || key === 'roe' || key === 'roa' || key === 'equity_ratio')
+                            ? `${(val * 100).toFixed(1)}%`
+                            : val.toFixed(2);
+                        html += `<span style="font-size:10px;background:rgba(139,35,35,0.15);padding:2px 6px;border-radius:2px;">${name}: <strong>${display}</strong></span>`;
+                    }
+                }
+                html += '</div>';
+            }
+
+            if (data.risk_signals?.risk_signals?.length) {
+                const risks = data.risk_signals;
+                const sev = risks.overall_severity || 'LOW';
+                const score = risks.risk_score || 0;
+                const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#8B2323' : sev === 'MEDIUM' ? '#5C4033' : '#333';
+                html += `<div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;margin:8px 0 5px;color:rgba(180,160,100,0.8);">Risk Signals — ${sev} (${score}/100)</div>`;
+                html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+                for (const s of risks.risk_signals.slice(0, 6)) {
+                    const color = s.severity === 'CRITICAL' || s.severity === 'HIGH' ? '#8B2323'
+                        : s.severity === 'MEDIUM' ? '#5C4033' : '#555';
+                    html += `<span style="font-size:9px;color:${color};padding:1px 4px;border:1px solid ${color};border-radius:2px;">${s.signal}</span>`;
+                }
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+            return container;
+        }
+
+        function addSystemMessage(content) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            const block = document.createElement('div');
+            block.className = 'message-block';
+            block.style.borderLeft = '3px solid #8B2323';
+            block.style.paddingLeft = '10px';
+
+            const headline = document.createElement('div');
+            headline.className = 'message-headline';
+            headline.textContent = 'System Notice';
+            headline.style.fontSize = '10px';
+
+            const body = document.createElement('div');
+            body.className = 'message-body';
+
+            const pre = document.createElement('pre');
+            pre.textContent = content;
+            body.appendChild(pre);
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.style.fontSize = '9px';
+            meta.style.marginTop = '5px';
+            meta.textContent = `${timeStr}`;
+
+            block.appendChild(headline);
+            block.appendChild(body);
+            block.appendChild(meta);
+            block.appendChild(createSeparator());
+
+            chatMessages.appendChild(block);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function createSeparator() {
+            const sep = document.createElement('div');
+            sep.className = 'message-separator';
+            sep.textContent = '— — —';
+            return sep;
+        }
+
+        function showLoading(show) {
+            loading.classList.toggle('active', show);
+            sendBtn.disabled = show;
+        }
+
+        function recordLatency(ms) {
+            latencies.push(ms);
+            if (latencies.length > 20) latencies.shift();
+
+            const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+            avgLatency.textContent = Math.round(avg);
+        }
+
+        // ===== HEALTH CHECK =====
+        async function checkHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/health', {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    connectionIndicator.classList.remove('offline');
+                    connectionStatus.textContent = 'Online';
+                    apiStatus.textContent = 'System Online';
+
+                    if (data.chunks_loaded !== undefined) {
+                        docCount.textContent = data.chunks_loaded || 0;
+                    }
+
+                    if (firstHealthCheck) {
+                        firstHealthCheck = false;
+                        const wasOnline = data.status === 'ok';
+                        if (wasOnline) {
+                            addSystemMessage('News wire connection established. Server ready.');
+                        }
+                    }
+                }
+            } catch (error) {
+                connectionIndicator.classList.add('offline');
+                connectionStatus.textContent = 'Offline';
+                apiStatus.textContent = 'System Offline';
+                if (firstHealthCheck) {
+                    firstHealthCheck = false;
+                    addSystemMessage('Warning: Cannot connect to news wire server at localhost:8000. Ensure FastAPI server is running.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

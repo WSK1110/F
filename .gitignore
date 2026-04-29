@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.env
+chroma_db/
+chroma_eval/
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+.DS_Store
+*.log
+*.pdf
+*.htm
+*.html
+!templates/*.html
+10k_files/
